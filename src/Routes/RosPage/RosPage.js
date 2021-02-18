@@ -9,9 +9,9 @@ import './ros-page.scss';
 import { systemsTableActions } from '../../Components/RosTable/redux';
 import { Pagination } from '@patternfly/react-core';
 
-import { InventoryTable } from '@redhat-cloud-services/frontend-components/components/cjs/Inventory';
+import { InventoryTable } from '@redhat-cloud-services/frontend-components/Inventory';
 import { register } from '../../store';
-import { entityDetailReducer } from '../../Components/RosTable/redux';
+import { entityDetailReducer } from '../../Components/RosTable/redux/entityDetailReducer';
 
 import asyncComponent from '../../Utilities/asyncComponent';
 const RosTable = asyncComponent(() => import('../../Components/RosTable/RosTable'));
@@ -41,6 +41,8 @@ class RosPage extends React.Component {
     async componentDidMount() {
         await window.insights.chrome.auth.getUser();
         this.props.fetchSystems({ page: this.state.page, perPage: this.state.perPage });
+        // Failure - went into infinite loop using below line
+        // this.state.unregister?.();
     }
 
     updatePagination(pagination) {
@@ -52,6 +54,14 @@ class RosPage extends React.Component {
         const { totalSystems, systemsData  } = this.props;
         const { page, perPage } = this.state;
 
+        // TEMP modified data
+        const tableData = systemsData;
+        const first = tableData[0];
+        tableData[0] = {
+            ...first,
+            id: '70502ce5-af67-457f-a504-c1fd91112ae6'
+        };
+        console.log(tableData);
         return (
             <React.Fragment>
                 <PageHeader>
@@ -77,30 +87,34 @@ class RosPage extends React.Component {
                                 tableProps={{
                                     canSelectAll: false
                                 }}
+                                hideFilters={{ all: true }}
                                 getEntities={async (_items, config) => {
+                                    const { results } = tableData;
                                     console.log('getEntities');
-                                    const { results } = systemsData;
+                                    console.log(this.state.getEntities);
                                     const data = await this.state.getEntities?.(
-                                        (results || []).map(({ uuid }) => uuid),
-                                        {
-                                            ...config,
-                                            hasItems: true
-                                        },
-                                        false
+                                      (results || []),
+                                      {
+                                          ...config,
+                                          hasItems: true
+                                      },
+                                      false
                                     );
-                                    console.log(results);
+
                                     console.log(data);
-                                    console.log('done!!');
-                                    return { total: 10, page: 1, perPage: 10, results: [{ id: 1 }] };
+                                    return {
+                                        ...data,
+                                        results
+                                    };
                                 }}
-                                onLoad={({ mergeWithEntities, INVENTORY_ACTION_TYPES, api }) => {
+                                isLoaded={!this.props.loading}
+                                onLoad={(loadProp) => {
+                                    const { mergeWithEntities, INVENTORY_ACTION_TYPES, api } = loadProp;
                                     this.setState({
-                                        getEntities: (() => api?.getEntities),
-                                        unregister: (() =>
-                                            register({
-                                                ...mergeWithEntities(entityDetailReducer(INVENTORY_ACTION_TYPES))
-                                            })
-                                        )
+                                        getEntities: (() => api?.getEntities)
+                                    });
+                                    register({
+                                        ...mergeWithEntities(entityDetailReducer(INVENTORY_ACTION_TYPES))
                                     });
                                 }}
                             />
