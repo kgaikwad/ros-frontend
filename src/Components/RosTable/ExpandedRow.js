@@ -31,7 +31,7 @@ export const ExpandedRow = ({ id, cloudProvider, instanceType, idlingTime, ioWai
 };
 
 ExpandedRow.propTypes = {
-    id: propTypes.number,
+    id: propTypes.string,
     cloudProvider: propTypes.string,
     instanceType: propTypes.string,
     idlingTime: propTypes.string,
