@@ -4,7 +4,15 @@ const { config: webpackConfig, plugins } = config({
     rootFolder: resolve(__dirname, '../'),
     sassPrefix: '.ros, .inventory',
     debug: true,
-    https: true,
+    https: false,
+    useProxy: true,
+    localChrome: process.env.INSIGHTS_CHROME,
+    ...(process.env.PROXY && {
+        https: true,
+        useProxy: true,
+        proxyVerbose: true,
+        appUrl: process.env.BETA ? '/beta/insights/ros' : '/insights/ros',
+    }),
     ...(process.env.BETA && { deployment: 'beta/apps' })
 });
 
